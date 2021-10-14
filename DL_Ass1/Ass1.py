@@ -29,6 +29,10 @@ def create_dataset(w_star, x_range, sample_size, sigma, seed= None, degree = 3):
         y += random_state.normal(0.0, sigma, sample_size).reshape(-1,1)
     return X,y
 
+def generateData(x_range = np.array([-3, 2]), w_star = np.array([[-8],[-4],[2],[1]]), sigma = 0.5, training_sample_size = 100, validation_sample_size = 100, seed_training = 0, seed_validation = 1, degree = 3):
+    [X_training, y_training] = create_dataset(w_star, x_range, training_sample_size, sigma, seed_training, degree = degree)
+    [X_validation, y_validation] = create_dataset(w_star, x_range, validation_sample_size, sigma, seed_validation, degree = degree)
+    return [X_training, y_training, X_validation, y_validation]
         
 def linRegression(X_tr, y_tr, X_val, y_val, alpha = 0.011, T = 1000, plot = False, degree = 3):
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -136,10 +140,6 @@ def plotPolynomials(w_star, w_hat):
     ax.legend()
     ax.set_title('Comparison ground truth end estimated polynomial')
     plt.show()
-def generateData(x_range = np.array([-3, 2]), w_star = np.array([[-8],[-4],[2],[1]]), sigma = 0.5, training_sample_size = 100, validation_sample_size = 100, seed_training = 0, seed_validation = 1, degree = 3):
-    [X_training, y_training] = create_dataset(w_star, x_range, training_sample_size, sigma, seed_training)
-    [X_validation, y_validation] = create_dataset(w_star, x_range, validation_sample_size, sigma, seed_validation)
-    return [X_training, y_training, X_validation, y_validation]
 
 def scatterPlot(X_training, y_training, X_validation, y_validation):
     x_training = X_training[:,1]
@@ -172,6 +172,7 @@ def compareOrders():
     #degree 3
     [X_training, y_training, X_validation, y_validation] = generateData(training_sample_size=10)
     [w_3, val_Loss_3] = linRegression(X_training, y_training, X_validation, y_validation, plot = True)
+    print(f"validation loss 3rd order: {val_Loss_3}")
     w_3 = np.transpose(w_3.detach().numpy())
     plotPolynomials(w_star, w_3)
         
@@ -179,7 +180,8 @@ def compareOrders():
     [X_training, y_training, X_validation, y_validation] = generateData(training_sample_size=10, degree = 4)
     [w_4, val_Loss_4] = linRegression(X_training, y_training, X_validation, y_validation, plot = True, degree = 4)
     w_4 = np.transpose(w_4.detach().numpy())
-    plotPolynomials(w_star, w_4)    
+    plotPolynomials(w_star, w_4)
+    print(f"validation loss 4th order: {val_Loss_4}")
     
 def main():
     #2. generate data
@@ -198,9 +200,9 @@ def main():
     #5. linear Regression
     [w_trained, val_loss] = linRegression(X_training, y_training, X_validation, y_validation)
     #6. report learning rate and number of iterations
-    #[val_Loss, alpha_opt, T_opt] = findHyperparameter(X_training, y_training, X_validation, y_validation)
-    #print(f"alpha: {alpha_opt}, T: {T_opt}")
-    #plotHyperparameters()
+    [val_Loss, alpha_opt, T_opt] = findHyperparameter(X_training, y_training, X_validation, y_validation)
+    print(f"alpha: {alpha_opt}, T: {T_opt}")
+    plotHyperparameters()
     # T = 1000 and alpha = 0.011 has no significantly higher val loss than the optimimum it's in the abs range of e-5
     # 7. Plot the training and validation loss
     linRegression(X_training, y_training, X_validation, y_validation, plot = True)
@@ -214,10 +216,7 @@ def main():
     #10. differ Sigma 
     differSigma()
     #11. reduce to 10 test observations and compare to 3rd order to 4th order polynomial
-    #compareOrders()
+    compareOrders()
     
-    
-    
- 
 if __name__ == '__main__':
     main()
