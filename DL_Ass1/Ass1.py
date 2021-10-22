@@ -85,10 +85,12 @@ def linRegression(X_tr, y_tr, X_val, y_val, alpha = 0.011, T = 1000, plot = Fals
         fig, ax = plt.subplots()
         ax.plot(T_axis, train_Loss_plot, label = 'Training loss')
         ax.plot(T_axis, val_Loss_plot, label = 'Validation loss')
-        ax.legend()
-        ax.set_xlabel("Training steps")
-        ax.set_ylabel("Loss")
-        ax.set_title("Training set size: {} Validation set size{}".format(X_tr.shape[0],X_val.shape[0]))
+        ax.set_xlabel("Training steps", fontsize = 20)
+        ax.set_ylabel("Loss", fontsize = 20)
+        ax.legend(fontsize=20)
+        plt.xticks(fontsize = 16)
+        plt.yticks(fontsize = 16)
+        ax.set_title("Training set size: {} Validation set size: {} learning rate: {}".format(X_tr.shape[0],X_val.shape[0], alpha), fontsize = 24)
         plt.show()
     
     return [w_star, val_loss] 
@@ -107,9 +109,10 @@ def findHyperparameter(X_training, y_training, X_validation, y_validation):
     min_index = unravel_index(np.nanargmin(val_Loss), val_Loss.shape)
     alpha_opt = alphas[min_index[0]]
     T_opt = Ts[min_index[1]]
+    valLoss_Opt = val_Loss[min_index[0],min_index[1]]
     np.save('hyper_losses', val_Loss)
     #clear data for visualization
-    return [val_Loss, alpha_opt, T_opt]
+    return [val_Loss, alpha_opt, T_opt, valLoss_Opt]
 
 def plotHyperparameters():
     #clear data
@@ -122,34 +125,46 @@ def plotHyperparameters():
     T_axis, alpha_axis = np.meshgrid(Ts, alphas)
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     surf = ax.plot_surface(alpha_axis, T_axis, val_Loss )
-    ax.set_title("Hyperparameter study")
-    ax.set_xlabel("alpha", fontsize = 12)
-    ax.set_ylabel("T", fontsize = 12)
-    ax.set_zlabel("Validation loss", fontsize = 12)
+    ax.set_title("Hyperparameter study", fontsize = 24)
+    ax.set_xlabel("alpha", fontsize = 18)
+    ax.set_ylabel("T", fontsize = 18)
+    ax.set_zlabel("Validation loss", fontsize = 18)
+    plt.xticks(fontsize = 14)
+    plt.yticks(fontsize = 14)
     plt.show()
 
 def plotPolynomials(w_star, w_hat):
-    x = np.linspace(-5,5,100)
-    y_star = [np.polyval(w_star,i) for i in x]
-    y_hat = [np.polyval(w_hat,i) for i in x]
+    x = np.linspace(-3,2,100)
+    #flip parameters , for correct input in polyval
+    w_star_poly= np.flip(w_star)
+    w_hat_poly = np.flip(w_hat)
+    y_star = [np.polyval(w_star_poly,i) for i in x]
+    y_hat = [np.polyval(w_hat_poly,i) for i in x]
     fig, ax = plt.subplots()
     ax.plot(x,y_star, label='Ground truth')
     ax.plot(x, y_hat, label ='Estimated polynomial')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
+    ax.set_xlabel('x', fontsize = 18)
+    ax.set_ylabel('y', fontsize = 18)
+    #ax.set_xlim(-3,2)
+    #ax.set_ylim(-15,10)
+    plt.xticks(fontsize = 14)
+    plt.yticks(fontsize = 14)
     ax.legend()
-    ax.set_title('Comparison ground truth end estimated polynomial')
+    ax.set_title('Comparison ground truth end estimated polynomial', fontsize = 24)
     plt.show()
 
 def scatterPlot(X_training, y_training, X_validation, y_validation):
     x_training = X_training[:,1]
     x_validation = X_validation[:,1]
     fig, ax = plt.subplots()
-    ax.set_xlabel("x", fontsize = 16)
-    ax.set_ylabel("y", fontsize = 16)
-    ax.scatter(x_training,y_training, label ='training data')
-    ax.scatter(x_validation, y_validation, c = 'C2', label = 'validation data')
-    ax.legend()
+    ax.set_xlabel("x", fontsize = 24)
+    ax.set_ylabel("y", fontsize = 24)
+    ax.set_title("Generated Training and Validation Data", fontsize = 28)
+    ax.scatter(x_training,y_training, label ='training data', marker = '+', color = 'red')
+    ax.scatter(x_validation, y_validation, c = 'C2', label = 'validation data', marker = '^')
+    ax.legend(fontsize=20)
+    plt.xticks(fontsize = 16)
+    plt.yticks(fontsize = 16)
     ax.grid(True)
     plt.show()
    
@@ -188,7 +203,7 @@ def main():
     #initialize var. according to assignment
     
     [X_training, y_training, X_validation, y_validation] = generateData()
-
+    
     #3. generate scatterplot
     #x can be found as column of first order monomials
     scatterPlot(X_training, y_training, X_validation, y_validation)
@@ -198,10 +213,10 @@ def main():
     # It should be set to False because a bias is already learned as offset in the polynomial
     
     #5. linear Regression
-    [w_trained, val_loss] = linRegression(X_training, y_training, X_validation, y_validation)
+    [w_trained, val_loss] = linRegression(X_training, y_training, X_validation, y_validation, plot = True)
     #6. report learning rate and number of iterations
-    [val_Loss, alpha_opt, T_opt] = findHyperparameter(X_training, y_training, X_validation, y_validation)
-    print(f"alpha: {alpha_opt}, T: {T_opt}")
+    [val_Loss, alpha_opt, T_opt, val_Loss_opt] = findHyperparameter(X_training, y_training, X_validation, y_validation)
+    print(f"alpha: {alpha_opt}, T: {T_opt}, optimal validation loss: {val_Loss_opt}")
     plotHyperparameters()
     # T = 1000 and alpha = 0.011 has no significantly higher val loss than the optimimum it's in the abs range of e-5
     # 7. Plot the training and validation loss
